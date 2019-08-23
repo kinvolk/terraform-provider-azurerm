@@ -86,7 +86,7 @@ func (client Client) ContainersClient(ctx context.Context, resourceGroup, accoun
 		return nil, fmt.Errorf("Error retrieving Account Key: %s", err)
 	}
 
-	storageAuth := authorizers.NewSharedKeyLiteAuthorizer(accountName, *accountKey)
+	storageAuth := authorizers.NewSharedKeyAuthorizer(accountName, *accountKey)
 	containersClient := containers.NewWithEnvironment(client.environment)
 	containersClient.Client.Authorizer = storageAuth
 	return &containersClient, nil

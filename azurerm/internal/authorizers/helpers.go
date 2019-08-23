@@ -48,7 +48,7 @@ func buildCanonicalizedHeader(headers http.Header) string {
 }
 
 // buildCanonicalizedResource builds the Canonical Resource required for to sign Storage Account requests
-func buildCanonicalizedResource(uri, accountName string) (*string, error) {
+func buildCanonicalizedResource(uri, accountName string, lite bool) (*string, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
@@ -68,8 +68,17 @@ func buildCanonicalizedResource(uri, accountName string) (*string, error) {
 	}
 
 	// TODO: replace this with less of a hack
-	if comp := u.Query().Get("comp"); comp != "" {
-		cr.WriteString(fmt.Sprintf("?comp=%s", comp))
+	if lite {
+		if comp := u.Query().Get("comp"); comp != "" {
+			cr.WriteString(fmt.Sprintf("?comp=%s", comp))
+		}
+	} else {
+		if comp := u.Query().Get("comp"); comp != "" {
+			cr.WriteString(fmt.Sprintf("\ncomp:%s", comp))
+		}
+		if restype := u.Query().Get("restype"); restype != "" {
+			cr.WriteString(fmt.Sprintf("\nrestype:%s", restype))
+		}
 	}
 
 	out := cr.String()
@@ -79,6 +88,11 @@ func buildCanonicalizedResource(uri, accountName string) (*string, error) {
 func formatSharedKeyLiteAuthorizationHeader(accountName, key string) string {
 	canonicalizedAccountName := primaryStorageAccountName(accountName)
 	return fmt.Sprintf("SharedKeyLite %s:%s", canonicalizedAccountName, key)
+}
+
+func formatSharedKeyAuthorizationHeader(accountName, key string) string {
+	canonicalizedAccountName := primaryStorageAccountName(accountName)
+	return fmt.Sprintf("SharedKey %s:%s", canonicalizedAccountName, key)
 }
 
 // hmacValue base-64 decodes the storageAccountKey, then signs the string with it
